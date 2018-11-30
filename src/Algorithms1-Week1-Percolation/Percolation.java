@@ -6,7 +6,7 @@ public class Percolation {
 	private final int SOURCE, DEST;
 
 	private final int n;
-	private final WeightedQuickUnionUF uf;
+	private final WeightedQuickUnionUF uf, backwash;
 	private final boolean[][] open;
 
 	private int openSites = 0;
@@ -16,12 +16,14 @@ public class Percolation {
 			throw new IllegalArgumentException();
 		this.n = n;
 		uf = new WeightedQuickUnionUF(n * n + 2);
+		backwash = new WeightedQuickUnionUF(n * n + 2);
 		open = new boolean[n][n];
 		SOURCE = n * n;
 		DEST = n * n + 1;
-		for (int i = 0; i < n; i++)
+		for (int i = 0; i < n; i++) {
 			uf.union(SOURCE, i);
-		for (int i = n * (n - 1); i < n * n; i++)
+			backwash.union(SOURCE, i);
+		} for (int i = n * (n - 1); i < n * n; i++)
 			uf.union(DEST, i);
 	}
 
@@ -37,14 +39,19 @@ public class Percolation {
 		open[row][col] = true;
 		int idx = idx(row, col);
 		if (isValidAndOpen(row + 1, col))
-			uf.union(idx, idx(row + 1, col));
+			union(idx, idx(row + 1, col));
 		if (isValidAndOpen(row - 1, col))
-			uf.union(idx, idx(row - 1, col));
+			union(idx, idx(row - 1, col));
 		if (isValidAndOpen(row, col + 1))
-			uf.union(idx, idx(row, col + 1));
+			union(idx, idx(row, col + 1));
 		if (isValidAndOpen(row, col - 1))
-			uf.union(idx, idx(row, col - 1));
+			union(idx, idx(row, col - 1));
 		openSites++;
+	}
+
+	private void union(int p, int q) {
+		uf.union(p, q);
+		backwash.union(p, q);
 	}
 
 	private int idx(int row, int col) {
@@ -74,7 +81,7 @@ public class Percolation {
 	}
 
 	private boolean isFullOffset(int row, int col) {
-		return isOpenOffset(row, col) && uf.connected(SOURCE, idx(row, col));
+		return isOpenOffset(row, col) && backwash.connected(SOURCE, idx(row, col));
 	}
 
 	public int numberOfOpenSites() {
